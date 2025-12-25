@@ -21,6 +21,9 @@ export default function Timer({ presets, activeTab }) {
   const intervalRef = useRef(null);
   const soundRef = useRef(null);
 
+  // 1. Add showToast to your state declarations
+  const [showToast, setShowToast] = useState(false);
+
   // Saving seconds to localStorage 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, seconds);
@@ -34,6 +37,11 @@ export default function Timer({ presets, activeTab }) {
         if (prev <= 1) {
           clearInterval(intervalRef.current);
           setIsRunning(false);
+          // Trigger the Toast
+          setShowToast(true);
+          
+          // Make the toast disappear after 10 seconds
+          setTimeout(() => setShowToast(false), 10000);
           soundRef.current?.play();
           return 0;
         }
@@ -62,6 +70,7 @@ export default function Timer({ presets, activeTab }) {
     }
   };
 
+  
   useEffect(() => {
     soundRef.current = new Audio(kittensMeowingFile);
     return () => clearInterval(intervalRef.current);
@@ -121,6 +130,27 @@ export default function Timer({ presets, activeTab }) {
         <button className="btn" onClick={pause}>Pause</button>
         <button className="btn btn-soft btn-error" onClick={() => reset()}>Reset</button>
       </div>
+
+      {/* DaisyUI Toast */}
+    {showToast && (
+      <div className="toast toast-top toast-center mt-5">
+        <div className="alert alert-success shadow-lg bg-pink-200 border-pink-400 text-pink-700">
+          <div className="flex items-center gap-2">
+            <span>✨</span>
+            {activeTab === "Work" ? <span className="font-bold">Timer is up! Time for a cozy break!</span>
+            :
+            <span className="font-bold">Timer is up! Let's get back to work!</span> }
+            
+            <button 
+              className="btn btn-ghost btn-xs" 
+              onClick={() => setShowToast(false)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
