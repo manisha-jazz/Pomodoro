@@ -11,11 +11,11 @@ function App() {
 
   return (
 
-   <div className=' bg-pink-400 h-screen overflow-hidden ' >
-     <div className='flex items-center justify-center my-30'>
+   <div className=' bg-pink-300 h-screen overflow-hidden ' >
+     <div className='flex items-center justify-center my-23'>
       <div className="card w-120 bg-base-300 card-lg shadow-md">
       <div className="card-body flex items-center">
-        <h1 className="card-title text-3xl font-bold">Pomodoro App</h1>
+        <h1 className="card-title text-4xl font-bold">Pomodoro App</h1>
 
         <TabSwitch activeTab={activeTab} setActiveTab={setActiveTab} />
     

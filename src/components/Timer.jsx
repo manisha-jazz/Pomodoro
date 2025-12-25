@@ -2,33 +2,41 @@ import { useState, useEffect, useRef } from "react";
 import peeking from "../assets/cat-peeking.gif";
 import falling from "../assets/falling.gif";
 import kittensMeowingFile from "../assets/kittensMeowing.mp3";
-// import catCuteFile from '../assets/catCute.mp3';
 
 export default function Timer({ presets, activeTab }) {
-  const [seconds, setSeconds] = useState(presets[0] * 60);
+  
+  const STORAGE_KEY = `pomo_seconds_${activeTab}`;
+  const CUSTOM_KEY = `pomo_custom_${activeTab}`;
+
+  const [seconds, setSeconds] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? parseInt(saved) : presets[0] * 60;
+  });
+  
+  const [customMins, setCustomMins] = useState(() => {
+    return localStorage.getItem(CUSTOM_KEY) || "";
+  });
+
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef(null);
-
   const soundRef = useRef(null);
+
+  // Saving seconds to localStorage 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, seconds);
+  }, [seconds, STORAGE_KEY]);
 
   const start = () => {
     if (isRunning) return;
     setIsRunning(true);
-
     intervalRef.current = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(intervalRef.current);
           setIsRunning(false);
-
-          if (soundRef.current) {
-            soundRef.current.currentTime = 0;
-            soundRef.current.play();
-          }
-
+          soundRef.current?.play();
           return 0;
         }
-
         return prev - 1;
       });
     }, 1000);
@@ -41,13 +49,21 @@ export default function Timer({ presets, activeTab }) {
 
   const reset = (mins = presets[0]) => {
     clearInterval(intervalRef.current);
-    setSeconds(mins * 60);
+    const newSeconds = mins * 60;
+    setSeconds(newSeconds);
     setIsRunning(false);
+  };
+
+  const handleCustomSubmit = (e) => {
+    e.preventDefault();
+    if (customMins > 0) {
+      localStorage.setItem(CUSTOM_KEY, customMins);
+      reset(customMins);
+    }
   };
 
   useEffect(() => {
     soundRef.current = new Audio(kittensMeowingFile);
-    // soundRef.current = new Audio(catCuteFile);
     return () => clearInterval(intervalRef.current);
   }, []);
 
@@ -60,37 +76,50 @@ export default function Timer({ presets, activeTab }) {
   return (
     <div className="flex flex-col gap-3 items-center">
 
-      <div className="card w-75 h-40 bg-base-200 card-lg shadow-md my-3 relative">
-        <h2 className="text-6xl font-bold flex justify-center items-center mt-10 mr-14">
-          {format(seconds)}
-        </h2>
-
-        <img
+      {/* Timer Display Card */}
+    
+        <div className="card w-82 h-40 bg-base-200 shadow-md my-3 relative overflow-hidden">
+          <h2 className="text-6xl font-bold flex justify-center items-center mt-12 mr-16">
+            {format(seconds)}
+          </h2>
+        <div>
+        
+          <img
           src={activeTab === "Work" ? peeking : falling}
-          className={`absolute right-2 w-24 ${
-            activeTab === "Work" ? "top-2" : "top-8"
-          }`}
-        />
-      </div>
+          className={`absolute right-2 w-24 ${activeTab === "Work" ? "top-2" : "top-8"}`}
+          />
+        </div>
+      
+    </div>
 
-      <div className="flex gap-2">
+      {/* Preset Buttons */}
+      <div className="flex gap-2 flex-wrap justify-center">
         {presets.map((p) => (
-          <button key={p} className="btn btn-outline" onClick={() => reset(p)}>
-            {p} min
+          <button key={p} className="btn btn-outline btn-primary" onClick={() => reset(p)}>
+            {p}m
           </button>
         ))}
       </div>
 
-      <div className="flex gap-2 mt-2">
-        <button className="btn btn-primary" onClick={start}>
-          Start
-        </button>
-        <button className="btn" onClick={pause}>
-          Pause
-        </button>
-        <button className="btn" onClick={() => reset()}>
-          Reset
-        </button>
+      {/* Custom Input Form */}
+      <form onSubmit={handleCustomSubmit} className="flex gap-2 items-center mt-2">
+        <input 
+          type="number" 
+          placeholder="Mins" 
+          min= "0"
+          step="any"
+          className="input input-bordered input-sm w-20 text-center border-pink-500 "
+          value={customMins}
+          onChange={(e) => setCustomMins(e.target.value)}
+        />
+        <button type="submit" className="btn btn-primary">Set Custom</button>
+      </form>
+
+      {/* Control Buttons */}
+      <div className="flex gap-2 mt-4">
+        <button className={`btn ${isRunning ? 'btn-disabled' : 'btn-primary'}`} onClick={start}>Start</button>
+        <button className="btn" onClick={pause}>Pause</button>
+        <button className="btn btn-soft btn-error" onClick={() => reset()}>Reset</button>
       </div>
     </div>
   );
